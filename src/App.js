@@ -5,15 +5,19 @@ import BookList from './components/Books/BookList';
 import BookDetail from './components/Books/BookDetail';
 import AddBook from './components/Books/AddBook';
 import FAQ from './components/FAQ';
-import UserLandingPage from './components/UserLandingPage';
+import UserLandingPage from './components/Auth/UserLandingPage';
 import Register from './components/Auth/Register';
+import ChangePassword from './components/Auth/ChangePassword';
 import Login from './components/Auth/Login';
 import ForgotPassword  from './components/Auth/ForgotPassword';
 import Home from './components/Home';
 import PrivateRoute from './components/Auth/PrivateRoute';
 import BookExchange from './components/Exchanges/BookExchange';
-import UserProfile from './components/UserProfile';
-import Notification from './components/Notification';
+import UserProfile from './components/Auth/UserProfile';
+import Notification from './components/Notification/Notification';
+import Request from './components/Request/Request';
+import Transaction from './components/Transaction/Transaction';
+
 
 
 function App() {
@@ -46,7 +50,12 @@ function Content() {
             <Route path="/books/:id" element={<BookDetail />} />
             <Route path="/add-book" element={<AddBook />} />
             <Route path="/exchanges" element={<BookExchange />} />  
-            <Route path="/notification" element={<Notification />} />                    
+            <Route path="/notification" element={<Notification />} />
+            <Route path="/changePassword" element={<ChangePassword />} />
+            <Route path="/request" element={<Request />} />
+            <Route path="/transaction/:transactionId" element={<Transaction />} />
+                
+                            
         </Route>
       </Routes>
     </>

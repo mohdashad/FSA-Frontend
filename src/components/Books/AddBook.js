@@ -9,20 +9,16 @@ const AddBook = () => {
   const [title, setTitle] = useState('');
   const [author, setAuthor] = useState('');
   const [category, setCategory] = useState('');
-  const [summary, setSummary] = useState('');
-  const [userId, setUserId] = useState(null);
+  const [publishedYear, setPublishedYear] = useState('');
+  
   //const [availableCopies, setAvailableCopies] = useState(1);
   const [message, setMessage] = useState('');
-  const  handleSubmit =async (e) => {
+  const  handleSubmit =async(e) => {
     e.preventDefault();
     const usrId=localStorage.getItem('userId');
-    console.log('userId----------'+usrId);
-    setUserId(usrId);
-    console.log('userId'+userId);
-    
-     
+    //setUserId(usrId);     
     // Simulate sending data to a backend API
-    const newBook = { title, author, category, summary,userId:usrId};
+    const newBook = { "Title":title,"Author": author,"Genre": category, "PublishedYear":publishedYear,OwnerID:usrId};
     console.log('Book added:', newBook);
     try {
       const response = await axios.post('http://localhost:5000/api/books', newBook);
@@ -42,7 +38,7 @@ const AddBook = () => {
     setTitle('');
     setAuthor('');
     setCategory('');
-    setSummary('');
+    setPublishedYear('');
     //setAvailableCopies(1);
   };
 
@@ -63,6 +59,8 @@ const AddBook = () => {
           <label>Author</label>
           <input type="text" value={author} onChange={(e) => setAuthor(e.target.value)} required />
         </div>
+        
+        
 
         <div className="form-group">
           <label>Category</label>
@@ -70,8 +68,8 @@ const AddBook = () => {
         </div>
 
         <div className="form-group">
-          <label>Summary</label>
-          <textarea value={summary} onChange={(e) => setSummary(e.target.value)} required />
+          <label>Published Year</label>
+          <textarea value={publishedYear} onChange={(e) => setPublishedYear(e.target.value)} required />
         </div>
 
         

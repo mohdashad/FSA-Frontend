@@ -8,12 +8,11 @@ import axios from 'axios';
 const Register = () => {
   const [message, setMessage] = useState(null)
   const [userData, setUserData] = useState({
-    name:'',
-    email: '',
+    Name:'',
+    Email: '',
     password: '',
-    street:'',
-    city:'',
-    state:''
+    Address:'',
+    ProfilePicture:''
 
 
   });
@@ -25,7 +24,7 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://localhost:5000/api/users', userData);
+      const response = await axios.post('http://localhost:5000/api/users/', userData);
       console.log('Book added:', response.data);
       // Clear form or redirect after successful submission
       setMessage('Registered successfully!');
@@ -36,7 +35,7 @@ const Register = () => {
   };
 
   return (
-    <div class="register-container">
+    <div className="register-container">
       <div className='wrapper'>
         <Link to="/">
         <img src={logo} alt='Logo'/>
@@ -45,7 +44,7 @@ const Register = () => {
         <form onSubmit={handleSubmit}>
         <input
             type="text"
-            name="name"
+            name="Name"
             placeholder="Name"
             //value={bookData.title}
             onChange={handleChange}
@@ -54,7 +53,7 @@ const Register = () => {
           
           <input
             type="email"
-            name="email"
+            name="Email"
             placeholder="Email"
             value={userData.email}
             onChange={handleChange}
@@ -63,46 +62,21 @@ const Register = () => {
 
           <input
             type="password"
-            name="password"
+            name="Password"
             placeholder="Password"
-            value={userData.password}
+            value={userData.Password}
             onChange={handleChange}
             required
           />
-          
-          <input
-            type="Street"
-            name="street"
-            placeholder="Street"
+          <br/>
+          <textarea
+            name="Address"
+            placeholder="Address"
             //value={bookData.title}
             onChange={handleChange}
             required
           />
-          <input
-            type="City"
-            name="city"
-            placeholder="City"
-            //value={bookData.title}
-            onChange={handleChange}
-            required
-          />
-          <input
-            type="State"
-            name="state"
-            placeholder="State"
-            //value={bookData.title}
-            onChange={handleChange}
-            required
-          />
-          
-          <input
-            type="text"
-            name="postalCode"
-            placeholder="Postal Code"
-            //value={bookData.title}
-            onChange={handleChange}
-            required
-          />         
+              <br/>     
           <button type="submit">Register</button>
         </form>
         {message && <p className="success-message">{message}</p>}

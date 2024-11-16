@@ -2,50 +2,79 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import '../../styles/styles.css'; // with import
 import axios from 'axios';
+import Loader from '../Loader'; // with import '../../styles/styles.css'; // with import
+import RequestPopup from './RequestPopup';
+
 
 const BookExchange = () => {
   // State to manage the list of borrowable books (usually fetched from an API)
   const [books, setBooks] = useState([]);
-  // State for search input, selected category, and filtered books
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [preloader, setPreloader] = useState(false);
+  //const [updatedBook, setUpdatedBook] = useState('');
+  /* Model */
+  const [selectedBook, setSelectedBook] = useState(null);
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
+  
+
 
   // Fetch available books (Simulate fetching data from an API)
   useEffect(() => {
-    const fetchBorrowableBooks = () => {
+    const fetchBooks  = async() => { 
+      //const userId = localStorage.getItem('userId');   
+      try {
+        const response = await axios.get(`http://localhost:5000/api/books/available-books/`, {
+          params: {
+            search: searchTerm,
+            page: currentPage,
+            limit: 5
+          },
+        });
+        
+        setBooks(response.data.books);
+        setTotalPages(response.data.totalPages); 
+      } catch (error) {
+        setBooks([]);
+        setTotalPages(0); 
+      } 
+      
+    
+  };
 
-        axios.get('http://localhost:5000/api/books?isListed=true').then(response => {
-            setBooks(response.data);  // Set the books data from the API response
-          })
-          .catch(error => {
-            console.error('Error fetching books:', error);
-          }); 
-          /*
-      // Example data (replace with an API call)
-      const availableBooks = [
-        { id: 1, title: 'To Kill a Mockingbird', author: 'Harper Lee', category: 'Fiction' },
-        { id: 2, title: 'Educated', author: 'Tara Westover', category: 'Memoir' },
-        { id: 3, title: 'The Hobbit', author: 'J.R.R. Tolkien', category: 'Fantasy' },
-        // Additional books...
-      ];
-      setBooks(availableBooks); 
-      */
-    };
+  fetchBooks ();
+},  [searchTerm, currentPage]);
 
-    fetchBorrowableBooks();
-  }, []);
+const handleBorrowClick = (book) => {
+  setSelectedBook(book);
+  setIsPopupOpen(true);
+};
 
-   // Function to filter books based on search and category
-   const filteredBooks = books.filter((book) => {
-    const matchesSearch = book.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          book.author.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'All' || book.category === selectedCategory;
-
-    return matchesSearch && matchesCategory;
-  });
-
-  // Get unique categories for the dropdown
-  const categories = ['All', ...new Set(books.map(book => book.category))];
+  const handlePopupSubmit = async (requestData) => {
+    try {
+      const userId=localStorage.getItem('userId');
+      const { deliveryMethod, duration, negotiatedTerms } = requestData;
+      const requestBody = {
+        RequestedBy: userId,
+        RequestedTo:selectedBook.OwnerID,
+        BookID: selectedBook._id,
+        DeliveryMethod:deliveryMethod,
+        Duration:duration,
+        NegotiatedTerms:negotiatedTerms
+      };
+      console.log(requestBody);
+       const response = await axios.post('http://localhost:5000/api/request/', requestBody);
+       alert(response.data.message);
+    } catch (error) {
+      console.error('Error creating exchange request:', error);
+      alert('Failed to create exchange request. Please try again.');
+    }
+  };
+ 
+  
+  
+  
 
   return (
     <div className="book-exchange-container">
@@ -53,11 +82,11 @@ const BookExchange = () => {
         <h1>Available for Borrow</h1>
         <p>Explore books that other users have made available for exchange or borrowing.</p>
       </header>
-
+      {preloader && <Loader/> }
       {/* Books List */}
       <section className="borrowable-books-list">
         <div className="wrapper">
-             {/* Search and Category Filter */}
+             
             <div className="filters">
             <input 
             type="text" 
@@ -66,19 +95,34 @@ const BookExchange = () => {
             onChange={(e) => setSearchTerm(e.target.value)} 
             className="search-input"
             />
-            <select 
-            value={selectedCategory} 
-            onChange={(e) => setSelectedCategory(e.target.value)} 
-            className="category-select"
+           
+            
+
+            {/* Pagination Controls */}
+            <button className="request-borrow-btn"
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
             >
-            {categories.map((category) => (
-                <option key={category} value={category}>{category}</option>
-            ))}
-            </select>
-            </div>
+              Previous
+            </button>
+            <span className="pagination">
+              Page {currentPage} of {totalPages}
+            </span>
+            <button className="request-borrow-btn"
+              onClick={() =>
+                setCurrentPage((prev) => (prev < totalPages ? prev + 1 : prev))
+              }
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </button>
+
+            
+          </div>
+           
 
              {/* Responsive Table for Displaying Books */}
-                {filteredBooks.length > 0 ? (
+                {books.length > 0 ? (
                     <table className="responsive-table">
                     <thead>
                         <tr>
@@ -89,14 +133,15 @@ const BookExchange = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredBooks.map((book) => (
+                        {books.map((book) => (
                         <tr key={book._id}>
-                            <td>{book.title}</td>
-                            <td>{book.author}</td>
-                            <td>{book.category}</td>
+                            <td>{book.Title}</td>
+                            <td>{book.Author}</td>
+                            <td>{book.Genre}</td>
                             <td>
                             <Link to={`/books/${book._id}`} className="view-details-btn">View Details</Link>
-                            <button className="request-borrow-btn">Request Borrow</button>
+                            {book.OwnerID!==localStorage.getItem('userId')?(<button className="request-borrow-btn" onClick={() => handleBorrowClick(book)}>Create Borrow Request</button>):('')}
+                            
                             </td>
                         </tr>
                         ))}
@@ -105,6 +150,12 @@ const BookExchange = () => {
                 ) : (
                     <p>No books available for borrowing at the moment.</p>
                 )}
+
+      <RequestPopup
+        isOpen={isPopupOpen}
+        onClose={() => setIsPopupOpen(false)}
+        onSubmit={handlePopupSubmit}
+      />
             </div>
         </section>
 
