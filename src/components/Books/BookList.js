@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import '../../styles/styles.css'; // with import
+import Loader from '../Loader'; // with import '../../styles/styles.css'; // with import
 import axios from 'axios';
 
 
@@ -9,61 +10,90 @@ const ViewBooks = () => {
   const [books, setBooks] = useState([]);
   // State for search input, selected category, and filtered books
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
+ 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [updatedBook, setUpdatedBook] = useState('');
+  const [preloader, setPreloader] = useState(false);
+
 
   // Fetch available books (Simulate fetching data from an API)
   useEffect(() => {
-    const fetchBorrowableBooks = () => {
-      // Example data (replace with an API call)
-      const usrId=localStorage.getItem('userId');
-      axios.get(`http://localhost:5000/api/books?userId=${usrId}`).then(response => {
-        setBooks(response.data);  // Set the books data from the API response
-      })
-      .catch(error => {
-        console.error('Error fetching books:', error);
-      });
-      /*
-      const availableBooks = [
-        { id: 1, title: 'To Kill a Mockingbird', author: 'Harper Lee', category: 'Fiction' },
-        { id: 2, title: 'Educated', author: 'Tara Westover', category: 'Memoir' },
-        { id: 3, title: 'The Hobbit', author: 'J.R.R. Tolkien', category: 'Fantasy' },
-        // Additional books...
-      ];
-      setBooks(availableBooks);
-      */
+      const fetchBooks  = async() => { 
+        const userId = localStorage.getItem('userId');  
+        try{  
+            const response = await axios.get(`http://localhost:5000/api/books/owner/${userId}`, {
+              params: {
+                search: searchTerm,
+                page: currentPage,
+                limit: 5
+              },
+            });
+            
+            if(response.status==200){
+              setBooks(response.data.books);
+              setTotalPages(response.data.totalPages);
+            }else{
+              setBooks([]);
+              setTotalPages(0);
+            }
+      }catch(e){
+          setBooks([]);
+          setTotalPages(0); 
+      } 
+      
     };
 
-    fetchBorrowableBooks();
-  }, []);
+    fetchBooks ();
+  },  [searchTerm, currentPage]);
+    
+ 
 
-   // Function to filter books based on search and category
-   const filteredBooks = books.filter((book) => {
-    const matchesSearch = book.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          book.author.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'All' || book.category === selectedCategory;
+  // Handle the deletion of a book
+  const deleteBook = (bookId) => {
+    axios
+      .delete(`http://localhost:5000/api/books/${bookId}`)
+      .then((response) => {
+        console.log(response.data.message); // 'Book deleted successfully'
+        
+        // Update the UI by removing the deleted book from the state
+        setBooks(books.filter((book) => book._id !== bookId));
+      })
+      .catch((error) => {
+        console.error('There was an error deleting the book!', error);
+      });
+  };
 
-    return matchesSearch && matchesCategory;
-  });
 
-  // Get unique categories for the dropdown
-  const categories = ['All', ...new Set(books.map(book => book.category))];
-
-  // Handle Listing Event
-  const handleListing=(e)=>{
-    e.preventDefault();
-    alert(e.target.dataset.idx);
-  }
+  const updateBook = async (bookId, updatedData) => {
+    try {
+      console.log('Book updated:', updatedData);
+      const response = await axios.put(`http://localhost:5000/api/books/${bookId}`, updatedData);
+      console.log('Book updated:', response.data);
+  
+      // Optional: Update the local state to reflect the change
+      setBooks((prevBooks) =>
+        prevBooks.map((book) =>
+          book._id === bookId ? { ...book, ...updatedData } : book
+        )
+      );
+    } catch (error) {
+      console.error('Error updating book:', error);
+    }
+  };
 
   return (
     <div className="book-exchange-container">
-      <header className="book-exchange-header">
-        <h1>Available for Lend</h1>
-        <p>Explore books that you can make available for lend</p>
-      </header>
+      
+      
+
+    
+
 
       {/* Books List */}
-      <section className="borrowable-books-list">
+        <section className="borrowable-books-list">
         <div className="wrapper">
+        {preloader && <Loader/> }
              {/* Search and Category Filter */}
             <div className="filters">
             <input 
@@ -73,44 +103,66 @@ const ViewBooks = () => {
             onChange={(e) => setSearchTerm(e.target.value)} 
             className="search-input"
             />
-            <select 
-            value={selectedCategory} 
-            onChange={(e) => setSelectedCategory(e.target.value)} 
-            className="category-select"
+           
+
+            {/* Pagination Controls */}
+            <button className="request-borrow-btn"
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
             >
-            {categories.map((category) => (
-                <option key={category} value={category}>{category}</option>
-            ))}
-            </select>
-            </div>
+              Previous
+            </button>
+            <span className="pagination">
+              Page {currentPage} of {totalPages}
+            </span>
+            <button className="request-borrow-btn"
+              onClick={() =>
+                setCurrentPage((prev) => (prev < totalPages ? prev + 1 : prev))
+              }
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </button>
+
+            
+          </div>
 
              {/* Responsive Table for Displaying Books */}
-                {filteredBooks.length > 0 ? (
+                {books.length > 0 ? (
                     <table className="responsive-table">
                     <thead>
                         <tr>
                         <th>Title</th>
-                        <th>Author</th>
+                        <th>Author</th>                        
                         <th>Category</th>
                         <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredBooks.map((book,index) => (
+                        {books.map((book,index) => (
                         <tr key={index}>
-                            <td>{book.title}</td>
-                            <td>{book.author}</td>
-                            <td>{book.category}</td>
+                            <td>{book.Title}</td>
+                            <td>{book.Author}</td>
+                           
+                            <td>{book.Genre}</td>
                             <td>
                             <Link to={`/books/${book._id}`} state={{ book }} className="view-details-btn">View Details</Link>
-                            <button className="request-borrow-btn" onClick={handleListing} data-idx={book._id}>List This Book</button>
+                            <button className="request-borrow-btn"  onClick={() => deleteBook(book._id)}>Delete</button>
+                            {
+                            !book.IsAvailable ?(
+                            <button className="request-borrow-btn"   onClick={() => updateBook(book._id, { IsAvailable: !book.IsAvailable })}>List This Book</button>
+                            ):(<button className="request-borrow-btn"   onClick={() => updateBook(book._id, { IsAvailable: !book.IsAvailable })}>Remove From Listing</button>)
+
+                          }
+
+                            
                             </td>
                         </tr>
                         ))}
                     </tbody>
                     </table>
                 ) : (
-                    <p>No books available for borrowing at the moment.</p>
+                    <p>No books available for Lend at the moment.</p>
                 )}
             </div>
         </section>

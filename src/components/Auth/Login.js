@@ -8,8 +8,8 @@ import LogoSection from './../LogoSection'; // with import from '../../images/Lo
 
 const Login = () => {
   const [credentials, setCredentials] = useState({
-    email: '',
-    password: '',
+    Email: '',
+    Password: '',
   });
   const [error, setError] = useState(null);
   const navigate = useNavigate();
@@ -28,7 +28,7 @@ const Login = () => {
 
     try {
       
-      const response = await fetch('http://localhost:5000/api/login', {
+      const response = await fetch('http://localhost:5000/api/users/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -59,7 +59,7 @@ const Login = () => {
       <form onSubmit={handleSubmit}>
         <input
           type="email"
-          name="email"
+          name="Email"
           placeholder="Email"
           value={credentials.email}
           onChange={handleChange}
@@ -68,7 +68,7 @@ const Login = () => {
         />
         <input
           type="password"
-          name="password"
+          name="Password"
           placeholder="Password"
           value={credentials.password}
           onChange={handleChange}

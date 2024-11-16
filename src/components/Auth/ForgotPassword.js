@@ -1,42 +1,35 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
-const ForgotPassword = () => {
-  const [email, setEmail] = useState('');
-  const [message, setMessage] = useState('');
-  const navigate = useNavigate();
+function ForgotPassword() {
+    const [email, setEmail] = useState('');
+    const [message, setMessage] = useState('');
 
-  const handleForgotPassword = async (e) => {
-    e.preventDefault();
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            const response = await axios.post('http://localhost:5000/api/forget-password', { email });
+            setMessage(response.data.message);
+        } catch (error) {
+            setMessage(error.response.data.message || "Error requesting password reset");
+        }
+    };
 
-    // Replace with actual API request
-    const fakeResetResponse = { success: true };
-
-    if (fakeResetResponse.success) {
-      setMessage('A password reset link has been sent to your email.');
-      setTimeout(() => navigate('/login'), 3000); // Redirect to login after 3 seconds
-    } else {
-      setMessage('Failed to send reset link. Please try again.');
-    }
-  };
-
-  return (
-    <div class="wrapper">
-      <form onSubmit={handleForgotPassword}>
-        <h2>Forgot Password</h2>
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="Enter your email"
-          required
-        />
-        <button type="submit">Send Reset Link</button>
-        
-        {message && <p>{message}</p>} {/* Display success or error message */}
-      </form>
-    </div>
-  );
-};
+    return (
+        <div className='wrapper'>
+            <h2>Forgot Password</h2>
+            <form onSubmit={handleSubmit}>
+                <input
+                    type="email"
+                    placeholder="Enter your email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                />
+                <button type="submit">Send Reset Link</button>
+            </form>
+            {message && <p>{message}</p>}
+        </div>
+    );
+}
 
 export default ForgotPassword;
